@@ -56,7 +56,7 @@ public class Root {
     }
 
     private static String convertToTimeFormat(String time) {
-        if (time.length() < 6) {
+        while (time.length() < 6) {
             time = "0" + time;
         }
         return time.substring(0, 2) + ":" + time.substring(2, 4) + ":" + time.substring(4);
@@ -64,6 +64,7 @@ public class Root {
 
     private static void display(List<String> list) throws ParseException {
         final Map<String, List<String>>[] f = new HashMap[]{null};
+        final String[] dates = {null, null};
         roots = list.stream().map(l -> {
             Root root = new Root();
             if (l.split("-").length < 2) {
@@ -77,7 +78,11 @@ public class Root {
             }
 
             if (key.equals("DATE")){
+                if (dates[0] == null)
+                    dates[0] = value;
+                dates[1] = value;
                 value = convertToDateFormat(value);
+
             }
             if (key.equals(Constants.MACHINEID))
                 f[0] = root.getMap();
@@ -124,7 +129,7 @@ public class Root {
             eachRoot.setMap(smap);
             return eachRoot;
         }).collect(Collectors.toList());
-        creatingExcel(roots);
+        creatingExcel(roots, "PRODUCTION-"+ dates[0] +"to" + dates[1]);
     }
 
     private static String convertToDateFormat(String value) {
@@ -145,9 +150,9 @@ public class Root {
         return ints;
     }
 
-    private static void creatingExcel(List<Root> roots) throws ParseException {
+    private static void creatingExcel(List<Root> roots, String fileName) throws ParseException {
 
-        File f = checkFile(target);
+        File f = checkFile(target, fileName);
         XSSFWorkbook workbook = new XSSFWorkbook();
         final XSSFSheet[] s = {null};
         String date1 = null;
@@ -240,11 +245,11 @@ public class Root {
         }
     }
 
-    private static File checkFile(String target) {
+    private static File checkFile(String target, String name) {
         try {
-            if (Files.list(Paths.get(target)).anyMatch(file -> file.getFileName().toString().contains("final")))
-                return Paths.get(target + "/final.xlsx").toFile();
-            return Files.createFile(Paths.get(target + "/final.xlsx")).toFile();
+            if (Files.list(Paths.get(target)).anyMatch(file -> file.getFileName().toString().contains(name)))
+                return Paths.get(target + "/" + name +".xlsx").toFile();
+            return Files.createFile(Paths.get(target + "/"+name+".xlsx")).toFile();
         } catch (IOException e) {
             e.printStackTrace();
         }
